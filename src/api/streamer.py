@@ -161,7 +161,7 @@ class AutoShieldStreamer:
         await send_fn({"type": "status", "state": "loading", "scenario": scenario})
         # Run in thread executor — feature extraction is CPU-bound (pandas/numpy)
         # and would block the asyncio event loop, causing the WebSocket to drop.
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(None, self._load_scenario, scenario)
         if result is None:
             await send_fn({"type": "error", "message": f"Dataset not found: can_{scenario}.csv"})

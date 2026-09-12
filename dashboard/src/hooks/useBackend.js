@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const WS_URL = "ws://localhost:8001/ws/stream";
+const WS_URL = "ws://127.0.0.1:8001/ws/stream";
 
 export default function useBackend({
   onFrameBatch,     // (frames: Frame[]) => void

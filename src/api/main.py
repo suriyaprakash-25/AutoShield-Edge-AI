@@ -53,7 +53,7 @@ streamer = AutoShieldStreamer(data_dir=DATA_DIR, model_dir=MODEL_DIR)
 async def lifespan(app: FastAPI):
     # Load models once at startup (runs in thread pool to avoid blocking)
     print("AutoShield API starting — loading models…")
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     msg = await loop.run_in_executor(None, streamer.load_models)
     print(f"  Model: {msg}")
     yield
@@ -70,7 +70,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],      # Dashboard can be on any port during development
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -139,9 +139,14 @@ async def websocket_stream(ws: WebSocket):
 
                 # Run the streaming loop as a background task so we can
                 # concurrently receive pause/stop commands from the client
-                stream_task = asyncio.create_task(
-                    streamer.stream_scenario(scenario, speed, send, stop_event, pause_event)
-                )
+                async def run_stream():
+                    try:
+                        await streamer.stream_scenario(scenario, speed, send, stop_event, pause_event)
+                    except Exception as e:
+                        stop_event.set()
+                        await send({"type": "error", "message": f"Server crash: {str(e)}"})
+
+                stream_task = asyncio.create_task(run_stream())
 
             elif cmd == "pause":
                 pause_event.set()
