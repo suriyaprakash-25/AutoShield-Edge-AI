@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-void: #080b0f;
+  --bg-panel: #0f1318;
+  --bg-panel-raised: #141920;
+  --bg-inset: #0b0e13;
+
+  --line: #1e2630;
+  --line-strong: #2c3744;
+
+  --text-primary: #e8ebf0;
+  --text-secondary: #8b95a5;
+  --text-tertiary: #4e5a6a;
+
+  --signal-cyan: #4fd1e8;
+  --signal-cyan-dim: #162830;
+  --signal-amber: #ffb238;
+  --signal-amber-dim: #3a2a10;
+  --signal-red: #ff4d5e;
+  --signal-red-dim: #2e1018;
+  --signal-green: #3ddc97;
+  --signal-green-dim: #0f2e20;
+  --signal-purple: #c084fc;
+  --signal-purple-dim: #2a1640;
+
+  --font-display: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  --radius: 6px;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 3px; }
+
+.mono { font-family: var(--font-mono); }
+
+/* ─────────────────────────────────────────────────────────────────
+   Core animations (original)
+───────────────────────────────────────────────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
+  100% { box-shadow: 0 0 0 8px transparent; opacity: 0; }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   v2 animations
+───────────────────────────────────────────────────────────────── */
+
+/* Dashes flowing from ECU → gateway along a spoke */
+@keyframes flow-forward {
+  from { stroke-dashoffset: 18; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* Gateway inner ring perpetual spin */
+@keyframes spin-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Expanding shockwave ring when an attack node is isolated */
+@keyframes shockwave-ring {
+  0%   { r: 22px; opacity: 0.85; stroke-width: 2.5px; }
+  100% { r: 80px; opacity: 0;    stroke-width: 0.3px; }
+}
+
+/* New incident card sliding in from the right */
+@keyframes slide-in-right {
+  from { transform: translateX(24px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* Alert banner dropping from the top */
+@keyframes slide-in-top {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+/* Threat panel red pulse when under attack */
+@keyframes critical-pulse {
+  0%, 100% { background: rgba(255, 77, 94, 0.06); border-color: rgba(255, 77, 94, 0.35); }
+  50%       { background: rgba(255, 77, 94, 0.16); border-color: rgba(255, 77, 94, 0.65); }
+}
+
+/* ECU outer ring pulse when suspicious */
+@keyframes ring-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50%       { opacity: 0.75; transform: scale(1.1); }
+}
+
+/* Shield ping halo */
+@keyframes shield-ping {
+  0%   { transform: scale(1);    opacity: 0.7; }
+  80%  { transform: scale(1.6);  opacity: 0; }
+  100% { transform: scale(1.6);  opacity: 0; }
+}
+
+/* Blocked counter flash on increment */
+@keyframes count-flash {
+  0%, 100% { opacity: 1; }
+  40%       { opacity: 0.45; }
+}
+
+/* Full-viewport red vignette on first attack detection */
+@keyframes vignette-flash {
+  0%   { opacity: 1; }
+  25%  { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Reusable SVG animation helpers
+───────────────────────────────────────────────────────────────── */
+
+/* Gateway dashed ring needs fill-box so transform-origin: center works in SVG */
+.gw-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Suspicious ECU outer ring */
+.ecu-ring-anim {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ring-pulse 1.3s ease-in-out infinite;
+}
