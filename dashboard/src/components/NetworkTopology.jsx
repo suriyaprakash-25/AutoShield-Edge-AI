@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { getEcuName } from "../data/loadCanData";
+import CanTrafficOverlay from "./CanTrafficOverlay";
 
 const STATUS_COLOR = {
   normal:    "var(--signal-cyan)",
@@ -20,7 +21,7 @@ const NODE_POS = Object.fromEntries(
   })
 );
 
-export default function NetworkTopology({ networkState, recentAttackerIds }) {
+export default function NetworkTopology({ networkState, recentAttackerIds, scenario = "normal", isPlaying = false }) {
   const svgRef = useRef(null);
 
   useEffect(() => {
@@ -198,6 +199,18 @@ export default function NetworkTopology({ networkState, recentAttackerIds }) {
       margin: "0 auto",
     }}>
       <svg ref={svgRef} style={{ width: "100%", height: "auto", display: "block" }} />
+
+      <CanTrafficOverlay
+        width={W}
+        height={H}
+        cx={CX}
+        cy={CY}
+        ecuIds={ECU_ORDER}
+        positions={NODE_POS}
+        networkState={networkState}
+        scenario={scenario}
+        isPlaying={isPlaying}
+      />
 
       {/* React-controlled overlay: shockwave rings on newly-isolated attacker nodes */}
       <svg

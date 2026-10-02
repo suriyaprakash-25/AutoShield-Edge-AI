@@ -74,7 +74,12 @@ try {
   await page.getByTestId("start-stop").click();
   await page.waitForTimeout(900);
   await expectText(page.getByTestId("incident-count"), "0 total");
+  const livePackets = await page.locator(".can-packet-dot").count();
+  if (livePackets < 10) throw new Error(`Expected animated CAN packet flow, found ${livePackets} packets`);
+  await expectText(page.getByTestId("can-activity-layer"), "LIVE CAN MESSAGE FLOW");
   await page.getByTestId("start-stop").click();
+  await page.waitForTimeout(350);
+  if (await page.locator(".can-packet-dot").count()) throw new Error("CAN packets still rendered after Stop");
   await page.getByTestId("reset").click();
 
   const attacks = [
@@ -107,6 +112,7 @@ try {
   console.log("scenarios=normal,dos,fuzzy,rpm,gear");
   console.log("reconnection=pass");
   console.log("console_validation=pass");
+  console.log("can_animation=pass");
 } finally {
   await browser.close();
   await stopBackend();

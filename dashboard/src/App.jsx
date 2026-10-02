@@ -114,7 +114,12 @@ export default function App() {
                 evidence source: {state.model}
               </div>
             </div>
-            <NetworkTopology networkState={state.networkState || {}} recentAttackerIds={recentAttackerIds} />
+            <NetworkTopology
+              networkState={state.networkState || {}}
+              recentAttackerIds={recentAttackerIds}
+              scenario={state.scenario}
+              isPlaying={state.running}
+            />
           </div>
           <div style={{ flex: 1, minHeight: 0 }}>
             <TrafficFeed frames={visibleFrames} />

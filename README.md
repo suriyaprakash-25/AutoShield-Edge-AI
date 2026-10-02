@@ -12,6 +12,7 @@ AutoShield is a gateway-oriented CAN cybersecurity POC. This Stage-2 build demon
 - Gear spoof uses the frozen `0x43F` Logistic Regression specialist.
 - Start, stop, reset and scenario switching are deterministic.
 - The browser reconnects after a backend outage.
+- The vehicle digital twin shows animated live CAN message flow while the simulator is running, and pauses immediately on Stop.
 - Windows has a one-command launcher: `run_autoshield.ps1`.
 
 > This is a **virtual POC simulator**, not physical CAN/HIL evidence. Raspberry Pi 5 and physical CAN validation remain separate deployment work.

@@ -161,3 +161,19 @@ The build is ready for a repeatable Stage-2 **virtual POC demonstration**. Remai
 A clean archive was created at `C:\Users\Suriy\Downloads\AutoShield_Stage2_PhaseFG_Validated.zip`.
 
 The archive contains 66 project entries, includes the validation report and Windows launcher, and excludes `node_modules`. A clean extraction was performed; all 8 Python tests passed again, dependencies installed with `npm ci`, and the Vite production build completed successfully.
+
+## Live CAN visualization update
+
+The vehicle cyber digital twin now includes a live SVG CAN-message animation layer.
+
+Validation performed:
+
+- Start renders animated packet markers on every displayed CAN path.
+- Stop removes the moving packet markers immediately.
+- Attack-highlighted paths inherit Hybrid-v4 node status colors.
+- DoS increases packet density/speed to make bus loading visually obvious.
+- A gateway heartbeat ring indicates active bus processing.
+- The UI explicitly shows `LIVE CAN MESSAGE FLOW` while running and `CAN BUS PAUSED` while stopped.
+- Browser automation now asserts that at least 10 animated CAN packet elements are present during Normal traffic and that none remain after Stop.
+
+Browser result: **can_animation=pass**.
