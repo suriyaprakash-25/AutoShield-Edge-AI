@@ -1,133 +1,161 @@
-# AutoShield Edge AI — Build Progress
+# AutoShield Edge AI — Stage-2 Virtual POC
 
-## What's done (Steps 1-8 of 10 in the build order)
+AutoShield is a gateway-oriented CAN cybersecurity POC. This Stage-2 build demonstrates the **frozen Hybrid-v4 decision logic** in a repeatable simulator and browser dashboard.
 
-### 1. Data pipeline (`src/generate_dataset.py`)
-Synthetic CAN bus dataset generator matching the **HCRL Car Hacking Dataset**
-schema exactly (Timestamp, CAN_ID, DLC, DATA0-7, Flag). Models 10 realistic
-ECU IDs with proper periods (10ms-1000ms) and realistic *smoothly-varying*
-payloads (not pure random noise — real sensor values drift gradually).
+## What this build proves
 
-Generates 4 files: `can_normal.csv`, `can_dos.csv`, `can_fuzzy.csv`, `can_spoof.csv`.
+- Five repeatable scenarios: Normal, DoS, Fuzzy, RPM spoof, Gear spoof.
+- Every attack is evaluated by Hybrid-v4 evidence, not a dashboard-only animation.
+- DoS is evidenced by the commissioned per-ID rate policy.
+- Fuzzy injection is evidenced by the CAN-ID allowlist.
+- RPM spoof uses the frozen `0x316` Logistic Regression specialist.
+- Gear spoof uses the frozen `0x43F` Logistic Regression specialist.
+- Start, stop, reset and scenario switching are deterministic.
+- The browser reconnects after a backend outage.
+- Windows has a one-command launcher: `run_autoshield.ps1`.
 
-**TODO before October POC:** swap in the real HCRL dataset (free, requires
-filling an access form at `ocslab.hksecurity.net`). The schema matches
-exactly, so this is a one-line path change in `train_baseline.py`, not a
-rewrite.
+> This is a **virtual POC simulator**, not physical CAN/HIL evidence. Raspberry Pi 5 and physical CAN validation remain separate deployment work.
 
-### 2. Feature extraction (`src/feature_extraction.py`)
-Sliding-window (200ms, tuned empirically) feature extraction with:
-- Per-ID baseline profiling (mean/std inter-arrival time, payload entropy)
-- `msg_count_ratio` (per-ID share of bus traffic — NOT a raw global count,
-  this avoids one ID's flood drowning out other IDs' signals)
-- `iat_zscore` / `entropy_zscore`: deviation from THIS specific ID's own
-  baseline, not a global pooled average (critical for catching spoofing,
-  which reuses a real ID at an abnormal rate)
-- `is_new_id`: flags never-before-seen CAN IDs
+## Architecture
 
-### 3. Detection model (`src/detector.py`)
-Isolation Forest trained ONLY on normal traffic (genuine unsupervised
-anomaly detection — no attack examples needed at training time).
+```text
+Browser dashboard
+      |
+      | REST / polling
+      v
+Python demo backend
+      |
+      +--> deterministic Hybrid-v4 rules
+      |      allowlist / rate / DLC
+      |
+      +--> frozen ML specialists
+             0x316 RPM / 0x43F Gear
+```
+## Hybrid-v4 evidence
 
-**Validated results** (synthetic data, 200ms windows):
-| Attack | Precision | Recall | F1 |
-|---|---|---|---|
-| DoS | 0.49 | 1.00 | 0.65 |
-| Fuzzy | ~1.00 | 0.90-0.96 | 0.94-0.98 |
-| Spoofing | 0.60-0.75 | 1.00 | 0.78-0.85 |
+The local demo model files are under `backend/model/`.
 
-100% recall on all three attack types. Precision is intentionally
-lower-priority than recall (missing a real attack is worse than a false
-alarm you can tune away) — this is a defensible design choice to state to
-judges, not an oversight.
+- `hybrid_policy.json`
+- `rpm_specialist.json`
+- `gear_specialist.json`
 
-### 4. Explainability layer (built into `detector.py`)
-Feature-attribution explanations ("Unseen CAN ID", "Message frequency
-increased 999%+", etc.) calibrated against the per-ID baseline, not a naive
-global average (this distinction mattered — see "Known issues" below).
+The semantic parameters mirror the frozen Hybrid-v4 artifacts audited from the B200 development workspace. The local JSON files are re-serialized for the Windows demo, so their byte hashes are not expected to match the B200 artifact hashes.
 
-### 5. Autonomous response engine (`src/response_engine.py`)
-- Debounce logic (2 consecutive flagged windows before isolating — filters
-  single-window noise)
-- Confidence + severity gating before isolation (prevents acting on
-  statistically-real-but-weak combined signals)
-- **Bus-congestion suppression**: during a severe attack, innocent ECUs'
-  own timing/payload stats get disrupted as collateral noise from bus
-  contention. The engine detects this (`unique_ids_in_window` extreme
-  z-score) and suppresses individual-ID isolation for known ECUs in that
-  regime, so it doesn't isolate the victim instead of the attacker.
-- **Fuzzy-attack aggregation**: a real fuzzing attack can inject hundreds of
-  distinct never-seen IDs per minute. Isolating each individually would
-  produce thousands of incident rows — useless for a dashboard. The engine
-  collapses rapid bursts of new-ID isolations into one aggregated "Fuzzing
-  attack in progress" incident.
-- Incident logging (timestamp, attack type, confidence, reasons, action taken)
+The ML specialists use the frozen feature means, scales, Logistic Regression coefficients, intercepts and probability thresholds:
 
-**Validated end-to-end**: correctly isolates the true attacker ID(s) in all
-three scenarios with zero false-positive isolations of innocent ECUs (one
-known minor edge case — see below).
+- RPM `0x316`: threshold `0.9453756863`
+- Gear `0x43F`: threshold `0.9314904584`
 
-## Known issues / honest limitations
+The simulator deliberately keeps RPM/Gear structural traffic inside the allowlist/rate/DLC policy so that those scenarios must cross the **ML threshold** to alert.
 
-1. **Synthetic data, not real HCRL data yet.** Schema-accurate but not real
-   vehicle traffic. Swap in before relying on results for the POC pitch.
-2. **One residual false-positive edge case**: a known ECU (`02A0`) can get
-   isolated ~50s into the fuzzy-attack test, after the attack window has
-   ended, likely due to a post-attack timing artifact in the synthetic
-   generator (similar to a documented artifact in the real HCRL dataset).
-   Low priority — doesn't affect in-attack detection accuracy.
-3. **`vcan` (virtual CAN) live-replay layer not built/tested yet** — this
-   sandboxed dev container has no kernel-level `vcan` support. The pipeline
-   is designed to accept live `python-can` streams identically to CSV replay,
-   but this needs to be wired up and tested on a real Linux machine (or
-   WSL2) before the demo.
-4. **Hardware deployment (Raspberry Pi / Jetson) not yet done.** All
-   development so far is on the RTX 4050 laptop. Budget for a Pi/Jetson
-   before October — judges will be checking for genuine edge deployment,
-   and "trained on a workstation, deployed a quantized model on
-   resource-constrained hardware" is the credible framing.
+## Run on Windows
 
-## Next steps (Steps 7-10 of the build order)
+Prerequisites:
 
-7. ✅ **Dashboard + digital twin** — DONE. See `dashboard/README.md` for
-   details, validation results, and how to run it. Live network topology
-   (D3), live traffic feed, incident log with explainability, all running
-   client-side against a JS port of the validated Python detection logic.
-8. ✅ **LSTM-Autoencoder upgrade** — DONE. `src/lstm_detector.py` +
-   `src/train_lstm.py`. Drop-in replacement for the Isolation Forest with
-   an identical external interface. Run `python train_lstm.py` to train,
-   evaluate, and save; outputs a side-by-side comparison table.
+- Python 3.11+ in `PATH`
+- Node.js 22+ / npm
+- Chromium installed for Playwright only if you want browser validation
 
-   **Validated results vs Phase 1 (synthetic data, same feature pipeline):**
-   | Attack | Phase 1 (IsoForest) F1 | Phase 2 (LSTM-AE) F1 | Improvement |
-   |---|---|---|---|
-   | DoS | 0.65 | **0.78–0.82** | +25% — temporal context kills false alarms |
-   | Fuzzy | 0.97 | **0.99** | +2% — 100% recall, cleaner precision |
-   | Spoofing | 0.85 | **0.84–0.88** | comparable — per-ID z-score already strong |
+PowerShell:
 
-   **Architecture:** encoder-decoder LSTM with a 32-dim bottleneck.
-   Input: 10 × 200ms windows (2s temporal context) per CAN_ID.
-   Anomaly score = reconstruction MSE — the model learns what normal
-   traffic *evolves like over time*, not just what a single window looks
-   like, so a sustained DoS flood (high MSE for 10+ windows) is cleanly
-   separated from a transient burst (high MSE for 1-2 windows then recovery).
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\run_autoshield.ps1
+```
 
-   Also adds `predict_stream()` for real-time per-window inference with a
-   rolling buffer — wired directly to the response engine.
+The launcher builds the dashboard, starts the backend on `http://127.0.0.1:8000`, opens the browser and shuts the backend down when you press Enter.
+## Validation commands
 
-9. **AWS cloud layer** — simulated multi-vehicle fleet aggregation
-10. **Polish**: real hardware deployment, latency benchmarking, demo script,
-    jury Q&A prep
+Backend + simulator tests:
 
-## How to run
+```powershell
+python -m unittest discover -s tests -v
+```
 
-```bash
-cd src
-python3 generate_dataset.py --output ../data/can_normal.csv --mode normal --duration 120
-python3 generate_dataset.py --output ../data/can_dos.csv --mode dos --duration 60
-python3 generate_dataset.py --output ../data/can_fuzzy.csv --mode fuzzy --duration 60
-python3 generate_dataset.py --output ../data/can_spoof.csv --mode spoof --duration 60
+Frontend build/lint:
 
-python3 train_baseline.py          # trains + evaluates the detector, saves model
-python3 test_response_engine.py    # end-to-end test of detection -> response
+```powershell
+cd dashboard
+npm ci
+npm run lint
+npm run build
+```
+
+Browser + reconnection test:
+
+```powershell
+cd dashboard
+npx playwright install chromium
+npm run test:browser
+```
+
+## Expected evidence by scenario
+
+| Scenario | Genuine Hybrid-v4 reason | Expected action |
+|---|---|---|
+| Normal | none | ALLOW |
+| DoS | `RATE_LIMIT_EXCEEDED` | RATE_LIMIT |
+| Fuzzy | `UNKNOWN_ID` | DROP |
+| RPM spoof | `ML_RPM` above frozen threshold | ALERT |
+| Gear spoof | `ML_GEAR` above frozen threshold | ALERT |
+
+The dashboard Incident Log displays the reason code, human-readable evidence, action and specialist probability/threshold when applicable.
+## Repeatable two-minute demo
+
+**0:00–0:15 — Normal**
+1. Select **Normal**.
+2. Click **Start**.
+3. Show green/clean traffic and `0 incidents`.
+4. Click **Stop**, then **Reset**.
+
+**0:15–0:35 — DoS**
+1. Select **DoS**, click **Start**.
+2. Show `RATE_LIMIT_EXCEEDED`.
+3. Explain that the current 100 ms count exceeds the commissioned per-ID maximum.
+4. Show action `RATE_LIMIT`.
+5. Stop and Reset.
+
+**0:35–0:55 — Fuzzy**
+1. Select **Fuzzy**, click **Start**.
+2. Show `UNKNOWN_ID`.
+3. Explain that the injected ID is absent from the commissioned allowlist.
+4. Show action `DROP`.
+5. Stop and Reset.
+
+**0:55–1:20 — RPM spoof**
+1. Select **RPM spoof**, click **Start**.
+2. Show that structural policy is not violated.
+3. Show `ML_RPM`.
+4. Point out `p > threshold` in the evidence log.
+5. Stop and Reset.
+**1:20–1:45 — Gear spoof**
+1. Select **Gear spoof**, click **Start**.
+2. Show `ML_GEAR`.
+3. Point out the frozen specialist probability and threshold.
+4. Stop and Reset.
+
+**1:45–2:00 — Reliability**
+1. Mention Start/Stop/Reset repeatability.
+2. Point to `CONNECTED` backend status.
+3. State that backend failure/reconnection is covered by automated validation.
+4. Close with: **Detect locally. Decide safely. Defend at the edge.**
+
+## Scientific scope
+
+- Hybrid-v4 is a development/pilot artifact, not a production or safety-certified product.
+- The simulator validates decision logic and evidence flow; it does not replace physical CAN/HIL testing.
+- The ML specialists are vehicle/message-specific.
+- No universal zero-day claim is made.
+- Safety-critical automatic intervention remains policy-gated future work.
+- The 100 ms observation window precedes the decision.
+
+## Project structure
+
+```text
+backend/                  Hybrid-v4 model + simulator + HTTP server
+backend/model/            frozen semantic model parameters
+dashboard/                React/Vite browser dashboard
+tests/                    Phase F/G Python validation
+run_autoshield.ps1        Windows launcher
+PHASE_F_G_VALIDATION_REPORT.md
 ```
