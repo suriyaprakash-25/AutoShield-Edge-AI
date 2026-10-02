@@ -114,7 +114,7 @@ def main():
     thread.start()
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"AutoShield Hybrid-v4 POC listening on http://{args.host}:{args.port}", flush=True)
-    print("Scenarios: normal, dos, fuzzy, rpm, gear", flush=True)
+    print("Scenarios: normal, dos, fuzzy, rpm, gear, mix", flush=True)
     try:
         server.serve_forever(poll_interval=0.2)
     except KeyboardInterrupt:

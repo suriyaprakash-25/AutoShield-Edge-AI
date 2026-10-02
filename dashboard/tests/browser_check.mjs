@@ -98,6 +98,18 @@ try {
     await page.getByTestId("reset").click();
   }
 
+  await page.getByTestId("scenario-mix").click();
+  await page.waitForTimeout(250);
+  await page.getByTestId("start-stop").click();
+  await expectText(page.getByTestId("incident-log"), "RATE_LIMIT_EXCEEDED", 5000);
+  await expectText(page.getByTestId("incident-log"), "UNKNOWN_ID", 5000);
+  await expectText(page.getByTestId("incident-log"), "ML_RPM", 5000);
+  await expectText(page.getByTestId("incident-log"), "ML_GEAR", 5000);
+  const mixedPackets = await page.locator(".can-packet-dot").count();
+  if (mixedPackets < 25) throw new Error(`Expected dense mixed-attack animation, found ${mixedPackets} packets`);
+  await page.getByTestId("start-stop").click();
+  await page.getByTestId("reset").click();
+
   if (consoleErrors.length) throw new Error(`Unexpected console errors: ${consoleErrors.join(" | ")}`);
   if (pageErrors.length) throw new Error(`Page errors: ${pageErrors.join(" | ")}`);
   intentionalOutage = true;
@@ -109,10 +121,11 @@ try {
   intentionalOutage = false;
 
   console.log("BROWSER_CHECK_PASS");
-  console.log("scenarios=normal,dos,fuzzy,rpm,gear");
+  console.log("scenarios=normal,dos,fuzzy,rpm,gear,mix");
   console.log("reconnection=pass");
   console.log("console_validation=pass");
   console.log("can_animation=pass");
+  console.log("mix_combo=pass");
 } finally {
   await browser.close();
   await stopBackend();

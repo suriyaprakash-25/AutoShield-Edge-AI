@@ -7,7 +7,11 @@ export default function ControlPanel({ scenario, onScenarioChange, isPlaying, on
         Demonstration simulator
       </span>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {Object.entries(SCENARIOS).map(([key, item]) => (
+        {Object.entries(SCENARIOS).map(([key, item]) => {
+          const isMix = key === "mix";
+          const activeColor = isMix ? "var(--signal-purple)" : "var(--signal-cyan)";
+          const activeBg = isMix ? "var(--signal-purple-dim)" : "var(--signal-cyan-dim)";
+          return (
           <button
             key={key}
             data-testid={`scenario-${key}`}
@@ -19,16 +23,17 @@ export default function ControlPanel({ scenario, onScenarioChange, isPlaying, on
               fontSize: 12,
               fontWeight: 600,
               borderRadius: "var(--radius)",
-              border: `1px solid ${scenario === key ? "var(--signal-cyan)" : "var(--line-strong)"}`,
-              background: scenario === key ? "var(--signal-cyan-dim)" : "transparent",
-              color: scenario === key ? "var(--signal-cyan)" : "var(--text-secondary)",
+              border: `1px solid ${scenario === key ? activeColor : (isMix ? "rgba(192,132,252,0.45)" : "var(--line-strong)")}`,
+              background: scenario === key ? activeBg : "transparent",
+              color: scenario === key ? activeColor : (isMix ? "var(--signal-purple)" : "var(--text-secondary)"),
               cursor: loading ? "default" : "pointer",
               opacity: loading ? 0.5 : 1,
             }}
           >
             {item.label}
           </button>
-        ))}
+          );
+        })}
       </div>
       <div style={{ flex: 1 }} />
       <button

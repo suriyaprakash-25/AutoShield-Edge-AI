@@ -13,6 +13,7 @@ SCENARIOS = {
     "fuzzy": {"label": "Fuzzy", "description": "Uncommissioned random CAN IDs are injected"},
     "rpm": {"label": "RPM spoof", "description": "0x316 stays within structural policy but triggers the RPM ML specialist"},
     "gear": {"label": "Gear spoof", "description": "0x43F stays within structural policy but triggers the Gear ML specialist"},
+    "mix": {"label": "Mix / Combo", "description": "Interleaved multi-vector stream combining DoS, fuzzy, RPM spoof and Gear spoof attacks"},
 }
 
 class DemoSimulator:
@@ -41,7 +42,10 @@ class DemoSimulator:
     def _sample(self) -> dict:
         t = self.step * 0.1
         normal_ids = [0x130, 0x131, 0x140, 0x153, 0x18F, 0x1F1, 0x260, 0x4B1]
-        scenario = self.scenario
+        requested_scenario = self.scenario
+        scenario = requested_scenario
+        if requested_scenario == "mix":
+            scenario = ("dos", "fuzzy", "rpm", "gear")[self.step % 4]
         features = None
         flag = "R"
 
@@ -88,6 +92,7 @@ class DemoSimulator:
             "count": count,
             "dlc_mean": dlc_mean,
             "features": features,
+            "attack_component": scenario,
             "frame": {
                 "timestamp": round(t, 3),
                 "canId": f"{can_id:04X}",
@@ -106,6 +111,7 @@ class DemoSimulator:
             event = {
                 "sequence": self.step,
                 "scenario": self.scenario,
+                "attackComponent": sample["attack_component"],
                 "frame": sample["frame"],
                 "evidence": evidence,
                 "inference_ms": inference_ms,
@@ -117,7 +123,10 @@ class DemoSimulator:
                     "id": f"INC-{self.generation:02d}-{self.step:04d}",
                     "windowStart": sample["frame"]["timestamp"],
                     "canId": evidence["can_id"],
-                    "attackType": SCENARIOS[self.scenario]["label"],
+                    "attackType": (
+                        f"Mix · {SCENARIOS[sample['attack_component']]['label']}"
+                        if self.scenario == "mix" else SCENARIOS[self.scenario]["label"]
+                    ),
                     "confidence": evidence["confidence"],
                     "reasons": [x["detail"] for x in evidence["evidence"]],
                     "reasonCodes": evidence["reasons"],
@@ -165,8 +174,8 @@ class DemoSimulator:
             network = {}
             for cid in ["0316", "018F", "0260", "02A0", "0329", "0153", "043F", "05A0", "0220", "04B1"]:
                 network[cid] = "normal"
-            if self.events:
-                ev = self.events[-1]
+            recent_events = self.events[-4:] if self.scenario == "mix" else self.events[-1:]
+            for ev in recent_events:
                 if ev["evidence"]["alert"]:
                     cid = ev["evidence"]["can_id"]
                     if cid in network:

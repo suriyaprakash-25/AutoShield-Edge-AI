@@ -8,6 +8,7 @@ function packetStyle(status) {
 
 function scenarioDuration(scenario, status, index) {
   if (status !== "normal") return 0.72 + (index % 3) * 0.08;
+  if (scenario === "mix") return 0.62 + (index % 3) * 0.05;
   if (scenario === "dos") return 0.95 + (index % 3) * 0.08;
   if (scenario === "fuzzy") return 1.25 + (index % 4) * 0.09;
   return 1.85 + (index % 4) * 0.16;
@@ -24,7 +25,7 @@ export default function CanTrafficOverlay({
   scenario,
   isPlaying,
 }) {
-  const globalAlert = scenario === "dos" || scenario === "fuzzy";
+  const globalAlert = scenario === "dos" || scenario === "fuzzy" || scenario === "mix";
   return (
     <svg
       data-testid="can-activity-layer"
@@ -60,7 +61,7 @@ export default function CanTrafficOverlay({
         const status = networkState[id] || "normal";
         const style = packetStyle(status);
         const duration = scenarioDuration(scenario, status, index);
-        const count = scenario === "dos" || status !== "normal" ? 2 : 1;
+        const count = scenario === "mix" ? 3 : (scenario === "dos" || status !== "normal" ? 2 : 1);
 
         return Array.from({ length: count }, (_, copy) => {
           const outbound = (index + copy) % 2 === 0;

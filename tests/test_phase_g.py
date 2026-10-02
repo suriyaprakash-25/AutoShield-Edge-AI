@@ -80,6 +80,22 @@ class PhaseGIntegrationTests(unittest.TestCase):
         self.post({"action": "stop", "scenario": "gear"})
         self.assertFalse(self.state()["running"])
 
+    def test_mix_pipeline_contains_all_four_vectors(self):
+        self.post({"action": "scenario", "scenario": "mix"})
+        self.post({"action": "start", "scenario": "mix"})
+        time.sleep(1.15)
+        state = self.state()
+        self.post({"action": "stop", "scenario": "mix"})
+        reasons = {
+            reason
+            for incident in state["incidents"]
+            for reason in incident["reasonCodes"]
+        }
+        self.assertTrue({
+            "RATE_LIMIT_EXCEEDED", "UNKNOWN_ID", "ML_RPM", "ML_GEAR"
+        }.issubset(reasons))
+        self.assertGreaterEqual(len(state["incidents"]), 4)
+
     def test_backend_restart_reconnects(self):
         health_before = json.loads(urllib.request.urlopen(self.base + "/api/health").read().decode())
         self.assertEqual(health_before["status"], "ok")

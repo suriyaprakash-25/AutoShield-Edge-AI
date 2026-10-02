@@ -56,7 +56,7 @@ Command:
 python -m unittest discover -s tests -v
 ```
 
-Result: **8 tests passed / 0 failed** in approximately **2.95 seconds**.
+Result: **10 tests passed / 0 failed** in approximately **4.81 seconds**.
 Covered tests:
 
 1. Normal produces no alert and `ALLOW`.
@@ -67,15 +67,17 @@ Covered tests:
 6. Start/stop/reset is repeatable.
 7. Full HTTP pipeline produces Gear ML evidence.
 8. Backend process failure followed by restart returns to healthy state.
+9. Mix / Combo interleaves DoS, Fuzzy, RPM spoof and Gear spoof and preserves all four Hybrid-v4 reason codes.
+10. Full HTTP Mix / Combo pipeline exposes all four attack vectors.
 
 ### Frontend static analysis and build
 
 ```text
 oxlint: 0 warnings, 0 errors
-Vite: 589 modules transformed
-dist/index.html: 0.46 kB
-dist CSS: 1.13 kB
-dist JS: 241.79 kB (76.70 kB gzip)
+Vite: 590 modules transformed
+dist/index.html: 0.48 kB
+dist CSS: 2.27 kB
+dist JS: 250.31 kB (78.95 kB gzip)
 production build: PASS
 ```
 
@@ -101,6 +103,8 @@ Validated:
 - Fuzzy shows `UNKNOWN_ID`
 - RPM spoof shows `ML_RPM`
 - Gear spoof shows `ML_GEAR`
+- Mix / Combo shows `RATE_LIMIT_EXCEEDED`, `UNKNOWN_ID`, `ML_RPM`, and `ML_GEAR` in one interleaved run
+- Mix / Combo renders a denser 30-packet CAN animation layer
 - no unexpected page errors
 - no unexpected console errors during normal operation
 - backend is intentionally stopped
@@ -112,9 +116,11 @@ Browser test output:
 
 ```text
 BROWSER_CHECK_PASS
-scenarios=normal,dos,fuzzy,rpm,gear
+scenarios=normal,dos,fuzzy,rpm,gear,mix
 reconnection=pass
 console_validation=pass
+can_animation=pass
+mix_combo=pass
 ```
 
 ### Windows launcher
@@ -160,7 +166,7 @@ The build is ready for a repeatable Stage-2 **virtual POC demonstration**. Remai
 
 A clean archive was created at `C:\Users\Suriy\Downloads\AutoShield_Stage2_PhaseFG_Validated.zip`.
 
-The archive contains 66 project entries, includes the validation report and Windows launcher, and excludes `node_modules`. A clean extraction was performed; all 8 Python tests passed again, dependencies installed with `npm ci`, and the Vite production build completed successfully.
+The archive contains 103 project files, includes the validation report and Windows launcher, and excludes `.git`, `node_modules`, and `__pycache__`. A clean extraction was performed; all 10 Python tests passed again, dependencies installed with `npm ci`, frontend lint returned 0 warnings / 0 errors, and the Vite production build completed successfully.
 
 ## Live CAN visualization update
 
@@ -177,3 +183,9 @@ Validation performed:
 - Browser automation now asserts that at least 10 animated CAN packet elements are present during Normal traffic and that none remain after Stop.
 
 Browser result: **can_animation=pass**.
+
+## Mix / Combo multi-vector mode
+
+A new `Mix / Combo` scenario interleaves DoS, Fuzzy, RPM spoof, and Gear spoof attack vectors in a deterministic four-step cycle. Each vector is processed by the unchanged Hybrid-v4 detector, so the evidence log independently shows `RATE_LIMIT_EXCEEDED`, `UNKNOWN_ID`, `ML_RPM`, and `ML_GEAR` rather than a hard-coded generic mixed alert.
+
+The digital twin keeps recent RPM and Gear targets highlighted, increases CAN animation density to 30 moving packet markers, and identifies each incident as `Mix · <attack type>`. Unit, HTTP integration, browser, animation, and launcher checks all pass for this mode.

@@ -4,6 +4,7 @@ const SCENARIO_LABELS = {
   fuzzy: "Fuzzy attack",
   rpm: "RPM spoof",
   gear: "Gear spoof",
+  mix: "Mixed multi-vector attack",
 };
 
 export default function StatusBar({ scenario, isPlaying, frameIdx, latencyMs, backendOnline, connectionText, model }) {

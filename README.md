@@ -4,7 +4,7 @@ AutoShield is a gateway-oriented CAN cybersecurity POC. This Stage-2 build demon
 
 ## What this build proves
 
-- Five repeatable scenarios: Normal, DoS, Fuzzy, RPM spoof, Gear spoof.
+- Six repeatable scenarios: Normal, DoS, Fuzzy, RPM spoof, Gear spoof, and Mix / Combo.
 - Every attack is evaluated by Hybrid-v4 evidence, not a dashboard-only animation.
 - DoS is evidenced by the commissioned per-ID rate policy.
 - Fuzzy injection is evidenced by the CAN-ID allowlist.
@@ -99,8 +99,9 @@ npm run test:browser
 | Fuzzy | `UNKNOWN_ID` | DROP |
 | RPM spoof | `ML_RPM` above frozen threshold | ALERT |
 | Gear spoof | `ML_GEAR` above frozen threshold | ALERT |
+| Mix / Combo | interleaved `RATE_LIMIT_EXCEEDED` + `UNKNOWN_ID` + `ML_RPM` + `ML_GEAR` | per-vector action |
 
-The dashboard Incident Log displays the reason code, human-readable evidence, action and specialist probability/threshold when applicable.
+The dashboard Incident Log displays the reason code, human-readable evidence, action and specialist probability/threshold when applicable. Mix / Combo interleaves all four attack vectors through the same unchanged Hybrid-v4 decision path.
 ## Repeatable two-minute demo
 
 **0:00–0:15 — Normal**

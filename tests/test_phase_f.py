@@ -47,6 +47,21 @@ class PhaseFDemonstrationTests(unittest.TestCase):
         self.assertGreater(score["probability"], score["threshold"])
         self.assertEqual(event["evidence"]["action"], "ALERT")
 
+    def test_mix_interleaves_all_attack_evidence(self):
+        self.sim.reset("mix")
+        events = [self.sim.tick() for _ in range(4)]
+        self.assertEqual(
+            [event["attackComponent"] for event in events],
+            ["dos", "fuzzy", "rpm", "gear"],
+        )
+        reasons = {reason for event in events for reason in event["evidence"]["reasons"]}
+        self.assertTrue({
+            "RATE_LIMIT_EXCEEDED", "UNKNOWN_ID", "ML_RPM", "ML_GEAR"
+        }.issubset(reasons))
+        snapshot = self.sim.snapshot()
+        self.assertEqual(snapshot["networkState"]["0316"], "suspicious")
+        self.assertEqual(snapshot["networkState"]["043F"], "suspicious")
+
     def test_start_stop_reset_repeatability(self):
         self.sim.reset("rpm")
         self.sim.start()

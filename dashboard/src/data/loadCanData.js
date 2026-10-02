@@ -21,4 +21,5 @@ export const SCENARIOS = {
   fuzzy: { label: "Fuzzy", description: "Unknown CAN IDs injected" },
   rpm: { label: "RPM spoof", description: "Hybrid-v4 0x316 ML specialist" },
   gear: { label: "Gear spoof", description: "Hybrid-v4 0x43F ML specialist" },
+  mix: { label: "Mix / Combo", description: "Interleaved DoS + Fuzzy + RPM spoof + Gear spoof attack stream" },
 };
