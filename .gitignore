@@ -5,3 +5,5 @@ __pycache__/
 
 # Recovered B200 reference artifacts
 reference/b200_hybrid_v4/
+config.bat
+node_modules
