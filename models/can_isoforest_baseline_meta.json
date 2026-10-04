@@ -1,0 +1,35 @@
+{
+  "feature_columns": [
+    "msg_count",
+    "msg_count_ratio",
+    "unique_ids_in_window",
+    "mean_iat",
+    "std_iat",
+    "mean_entropy",
+    "is_new_id",
+    "iat_zscore",
+    "entropy_zscore"
+  ],
+  "train_means": {
+    "msg_count": 7.525967086984398,
+    "msg_count_ratio": 0.12823252831801668,
+    "unique_ids_in_window": 7.898482581748237,
+    "mean_iat": 0.13960904350219785,
+    "std_iat": 0.00016443503290323655,
+    "mean_entropy": 2.9716505095994443,
+    "is_new_id": 0.0,
+    "iat_zscore": -0.06202565556238422,
+    "entropy_zscore": -0.00044332202812654716
+  },
+  "train_stds": {
+    "msg_count": 7.54899338964238,
+    "msg_count_ratio": 0.12866661595988113,
+    "unique_ids_in_window": 0.9215461878277121,
+    "mean_iat": 0.22934824786468758,
+    "std_iat": 0.0002095482546908987,
+    "mean_entropy": 0.056150653555347305,
+    "is_new_id": 1e-06,
+    "iat_zscore": 2.1483908633946474,
+    "entropy_zscore": 0.3694270054098549
+  }
+}
