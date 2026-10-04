@@ -1,0 +1,7 @@
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Recovered B200 reference artifacts
+reference/b200_hybrid_v4/
