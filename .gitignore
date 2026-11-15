@@ -7,3 +7,6 @@ __pycache__/
 reference/b200_hybrid_v4/
 config.bat
 node_modules
+
+# env files: never commit secrets
+!.env.example
